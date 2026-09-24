@@ -14,22 +14,30 @@ const { autenticar, exigirPerfil } = require('./middleware/auth');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 let initializationPromise;
+const frontendOrigins = [
+  ...(process.env.FRONTEND_ORIGINS || '').split(','),
+  'http://localhost:3000',
+  'https://gestao-vivi-primicias.vercel.app',
+]
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean);
 
 // ---------------------------------------------------------------------------
 // Middlewares globais
 // ---------------------------------------------------------------------------
 app.use(cors({
   origin(origin, callback) {
-    const permitidas = (process.env.FRONTEND_ORIGINS || 'http://localhost:3000')
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-    if (!origin || permitidas.includes(origin)) return callback(null, true);
-    return callback(new Error('Origem não permitida pelo CORS.'));
+    const origemNormalizada = origin?.replace(/\/$/, '');
+    if (!origemNormalizada || frontendOrigins.includes(origemNormalizada)) {
+      return callback(null, true);
+    }
+    // Não transforme uma origem externa em erro da Function; apenas não libere CORS.
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
 }));
 app.use(helmet());
 app.use(express.json({ limit: '100kb' }));
