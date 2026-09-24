@@ -7,11 +7,13 @@ export default function Login({ onLogin }) {
   const [senha, setSenha] = useState('');
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [erro, setErro] = useState('');
+  const [loginBloqueado, setLoginBloqueado] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErro('');
+    if (loginBloqueado) return;
     if (!username.trim() || !senha) {
       const mensagem = 'Informe seu nome de usuário e senha.';
       setErro(mensagem);
@@ -25,9 +27,11 @@ export default function Login({ onLogin }) {
       onLogin(data);
       toast.success('Login realizado com sucesso.');
     } catch (err) {
-      const mensagem = err.response?.status === 429
+      const bloqueado = Number(err.response?.status) === 429;
+      const mensagem = bloqueado
         ? 'Muitas tentativas de login. Tente novamente mais tarde.'
         : err.response?.data?.error || 'Não foi possível entrar no sistema.';
+      setLoginBloqueado(bloqueado);
       setErro(mensagem);
       toast.error(mensagem);
     } finally {
@@ -48,7 +52,12 @@ export default function Login({ onLogin }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {erro && (
+          {loginBloqueado && (
+            <div role="alert" className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+              Muitas tentativas de login. Aguarde antes de tentar novamente.
+            </div>
+          )}
+          {erro && !loginBloqueado && (
             <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
               {erro}
             </div>
@@ -100,7 +109,7 @@ export default function Login({ onLogin }) {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || loginBloqueado}
             className="w-full rounded-md bg-[#8c7048] px-4 py-3 font-semibold text-white transition hover:bg-[#735b39] disabled:cursor-not-allowed disabled:bg-[#c8b99e]"
           >
             {loading ? 'Entrando...' : 'Entrar'}
