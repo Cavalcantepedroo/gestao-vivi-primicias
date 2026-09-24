@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './index.css';
 import { EmpresaProvider } from './context/EmpresaContext';
 import { Toaster } from 'react-hot-toast';
@@ -11,24 +11,7 @@ import Lives from './pages/Lives';
 import Estoque from './pages/Estoque';
 import MovimentacoesEstoque from './pages/MovimentacoesEstoque';
 import DashboardFaturamento from './pages/DashboardFaturamento';
-
-const AUTH_STORAGE_KEY = 'auth-session';
-
-function readSession() {
-  try {
-    const session = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || 'null');
-    if (!session?.token || !session?.usuario) return null;
-    const payload = JSON.parse(atob(session.token.split('.')[1]));
-    if (!payload.exp || payload.exp * 1000 <= Date.now()) {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      return null;
-    }
-    return session;
-  } catch (_err) {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    return null;
-  }
-}
+import { authApi } from './services/api';
 
 const PAGES = {
   pdv: PDV,
@@ -93,18 +76,29 @@ function AppLayout({ session, onLogout }) {
 }
 
 export default function App() {
-  const [session, setSession] = useState(() => readSession());
+  const [session, setSession] = useState(null);
+  const [carregandoSessao, setCarregandoSessao] = useState(true);
+
+  useEffect(() => {
+    authApi.get('/me')
+      .then(({ data }) => setSession({ usuario: data.usuario }))
+      .catch(() => setSession(null))
+      .finally(() => setCarregandoSessao(false));
+  }, []);
 
   const handleLogin = (data) => {
-    const nextSession = { token: data.token, usuario: data.usuario };
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
-    setSession(nextSession);
+    setSession({ usuario: data.usuario });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    setSession(null);
+  const handleLogout = async () => {
+    try {
+      await authApi.post('/logout');
+    } finally {
+      setSession(null);
+    }
   };
+
+  if (carregandoSessao) return null;
 
   return (
     <EmpresaProvider>

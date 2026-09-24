@@ -124,6 +124,7 @@ O backend aceita as URIs PostgreSQL do Supabase nestas variáveis:
 DATABASE_URL_VIVI=postgresql://...
 DATABASE_URL_PRIMICIAS=postgresql://...
 JWT_SECRET=uma-chave-com-pelo-menos-32-caracteres
+FRONTEND_ORIGINS=https://seu-frontend.vercel.app
 ```
 
 Copie as URIs em **Supabase > Connect > URI**. Se aparecer `password authentication failed`, redefina a senha do banco em **Supabase > Project Settings > Database** e copie a URI novamente. Senhas com caracteres especiais devem permanecer codificadas na URI.
@@ -137,7 +138,7 @@ npm run migrate
 
 Faça dois projetos na Vercel, usando o mesmo repositório:
 
-1. Projeto backend: **Root Directory** `backend`. Adicione `DATABASE_URL_VIVI`, `DATABASE_URL_PRIMICIAS`, `JWT_SECRET`, `AUTH_ADMIN_USERNAME`, `AUTH_ADMIN_EMAIL`, `AUTH_ADMIN_PASSWORD`, `AUTH_VENDEDOR_USERNAME`, `AUTH_VENDEDOR_EMAIL` e `AUTH_VENDEDOR_PASSWORD`. O endereço será a URL da API.
+1. Projeto backend: **Root Directory** `backend`. Adicione `DATABASE_URL_VIVI`, `DATABASE_URL_PRIMICIAS`, `JWT_SECRET`, `FRONTEND_ORIGINS`, `AUTH_ADMIN_USERNAME`, `AUTH_ADMIN_EMAIL`, `AUTH_ADMIN_PASSWORD`, `AUTH_VENDEDOR_USERNAME`, `AUTH_VENDEDOR_EMAIL` e `AUTH_VENDEDOR_PASSWORD`. `FRONTEND_ORIGINS` deve conter a URL exata do frontend; múltiplas origens podem ser separadas por vírgula. O endereço será a URL da API.
 2. Projeto frontend: **Root Directory** `frontend`. Adicione `VITE_API_URL` com a URL do projeto backend, sem barra no final. O build é `npm run build` e o output é `dist`.
 
 Não publique o arquivo `.env` no GitHub nem na Vercel; cadastre os valores no painel de Environment Variables. Se uma senha real foi compartilhada fora do Supabase, redefina-a antes da publicação.

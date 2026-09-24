@@ -146,7 +146,8 @@ async function getFaturamento(req, res) {
       })),
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao carregar faturamento:', err);
+    res.status(500).json({ error: 'Não foi possível carregar o faturamento.' });
   }
 }
 

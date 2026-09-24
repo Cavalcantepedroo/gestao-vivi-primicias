@@ -20,7 +20,8 @@ async function listarVendas(req, res) {
     `);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro interno no controller de vendas:', err);
+    res.status(500).json({ error: 'Não foi possível concluir a operação de venda.' });
   }
 }
 
@@ -37,7 +38,8 @@ async function buscarVenda(req, res) {
     if (!rows.length) return res.status(404).json({ error: 'Venda não encontrada' });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao buscar venda:', err);
+    res.status(500).json({ error: 'Não foi possível buscar a venda.' });
   }
 }
 
@@ -86,7 +88,8 @@ async function listarCarrinhosLive(req, res) {
 
     res.json(clientes);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao listar carrinhos:', err);
+    res.status(500).json({ error: 'Não foi possível listar os carrinhos.' });
   }
 }
 
@@ -113,7 +116,8 @@ async function criarClienteLive(req, res) {
       itens: [],
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao criar cliente da live:', err);
+    res.status(500).json({ error: 'Não foi possível criar o cliente.' });
   }
 }
 
@@ -137,7 +141,8 @@ async function adicionarItemLive(req, res) {
 
     res.status(201).json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao adicionar item ao carrinho:', err);
+    res.status(500).json({ error: 'Não foi possível adicionar o item.' });
   }
 }
 
@@ -157,7 +162,8 @@ async function removerItemLive(req, res) {
 
     res.status(204).send();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao remover item do carrinho:', err);
+    res.status(500).json({ error: 'Não foi possível remover o item.' });
   }
 }
 
@@ -184,7 +190,8 @@ async function atualizarStatusCarrinho(req, res) {
 
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao atualizar carrinho:', err);
+    res.status(500).json({ error: 'Não foi possível atualizar o carrinho.' });
   }
 }
 
@@ -263,7 +270,10 @@ async function criarVenda(req, res) {
     await client.query('ROLLBACK');
     // Se for nosso erro validado acima, passamos 400. Se for de banco, 500.
     const isValidationError = err.message.includes('Estoque insuficiente') || err.message.includes('Item inválido') || err.message.includes('não encontrado');
-    res.status(isValidationError ? 400 : 500).json({ error: err.message });
+    console.error('Erro ao registrar venda:', err);
+    res.status(isValidationError ? 400 : 500).json({
+      error: isValidationError ? err.message : 'Não foi possível registrar a venda.',
+    });
   } finally {
     client.release();
   }
@@ -351,7 +361,8 @@ async function fecharVendaLive(req, res) {
     res.status(200).json({ message: 'Venda finalizada e notificação agendada com sucesso!' });
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao fechar venda da live:', err);
+    res.status(500).json({ error: 'Não foi possível finalizar a venda da live.' });
   } finally {
     client.release();
   }
@@ -374,7 +385,8 @@ async function resumoVendas(req, res) {
     `);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao gerar resumo de vendas:', err);
+    res.status(500).json({ error: 'Não foi possível gerar o resumo de vendas.' });
   }
 }
 

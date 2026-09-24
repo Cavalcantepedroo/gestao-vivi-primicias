@@ -12,7 +12,8 @@ async function listarProdutos(req, res) {
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro interno no controller de produtos:', err);
+    res.status(500).json({ error: 'Não foi possível concluir a operação com o produto.' });
   }
 }
 
@@ -26,7 +27,8 @@ async function buscarProduto(req, res) {
     if (!rows.length) return res.status(404).json({ error: 'Produto não encontrado' });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao buscar produto:', err);
+    res.status(500).json({ error: 'Não foi possível buscar o produto.' });
   }
 }
 
@@ -40,7 +42,8 @@ async function buscarProdutoPorCodigo(req, res) {
     if (!rows.length) return res.status(404).json({ error: 'Produto não encontrado' });
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao buscar produto por código:', err);
+    res.status(500).json({ error: 'Não foi possível buscar o produto.' });
   }
 }
 
@@ -79,7 +82,8 @@ async function criarProduto(req, res) {
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Código de barras já cadastrado' });
     }
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao criar produto:', err);
+    res.status(500).json({ error: 'Não foi possível criar o produto.' });
   } finally {
     client.release();
   }
@@ -140,7 +144,8 @@ async function atualizarProduto(req, res) {
     res.json(rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao atualizar produto:', err);
+    res.status(500).json({ error: 'Não foi possível atualizar o produto.' });
   } finally {
     client.release();
   }
@@ -159,7 +164,8 @@ async function deletarProduto(req, res) {
     if (err.code === '23503') {
       return res.status(409).json({ error: 'Produto possui vendas vinculadas e não pode ser excluído' });
     }
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao excluir produto:', err);
+    res.status(500).json({ error: 'Não foi possível excluir o produto.' });
   }
 }
 
@@ -186,7 +192,8 @@ async function listarMovimentacoes(req, res) {
       created_at: mov.created_at,
     })));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro ao listar movimentações:', err);
+    res.status(500).json({ error: 'Não foi possível listar as movimentações.' });
   }
 }
 

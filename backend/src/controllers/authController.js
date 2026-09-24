@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { viviPool } = require('../database/db');
-const { getJwtSecret } = require('../middleware/auth');
+const { getJwtSecret, SESSION_COOKIE } = require('../middleware/auth');
 
 async function login(req, res) {
   const username = String(req.body.username || '').trim().toLowerCase();
@@ -15,16 +15,24 @@ async function login(req, res) {
       [username]
     );
     const usuario = rows[0];
-    if (!usuario) return res.status(401).json({ error: 'Usuário não encontrado.' });
+    if (!usuario) return res.status(401).json({ error: 'Usuário ou senha inválidos.' });
 
     const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
-    if (!senhaValida) return res.status(401).json({ error: 'Senha incorreta.' });
+    if (!senhaValida) return res.status(401).json({ error: 'Usuário ou senha inválidos.' });
 
     const payload = { id: usuario.id, nome: usuario.nome, username: usuario.username, perfil: usuario.perfil };
-    const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '8h' });
-    res.json({ token, usuario: payload });
+    const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h', algorithm: 'HS256' });
+    res.cookie(SESSION_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 2 * 60 * 60 * 1000,
+      path: '/',
+    });
+    res.json({ usuario: payload });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Erro no login:', err);
+    res.status(500).json({ error: 'Não foi possível realizar o login.' });
   }
 }
 
@@ -32,4 +40,9 @@ function verificarSessao(req, res) {
   res.json({ usuario: req.usuario });
 }
 
-module.exports = { login, verificarSessao };
+function logout(req, res) {
+  res.clearCookie(SESSION_COOKIE, { httpOnly: true, path: '/' });
+  res.status(204).send();
+}
+
+module.exports = { login, verificarSessao, logout };

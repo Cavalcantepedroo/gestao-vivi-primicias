@@ -1,4 +1,7 @@
 const jwt = require('jsonwebtoken');
+const { parse } = require('cookie');
+
+const SESSION_COOKIE = 'vivi_session';
 
 function getJwtSecret() {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
@@ -9,12 +12,14 @@ function getJwtSecret() {
 
 function autenticar(req, res, next) {
   const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const bearerToken = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const cookieToken = parse(req.headers.cookie || '')[SESSION_COOKIE];
+  const token = bearerToken || cookieToken;
 
   if (!token) return res.status(401).json({ error: 'Autenticação necessária.' });
 
   try {
-    req.usuario = jwt.verify(token, getJwtSecret());
+    req.usuario = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
     next();
   } catch (_err) {
     return res.status(401).json({ error: 'Sessão expirada ou token inválido.' });
@@ -30,4 +35,4 @@ function exigirPerfil(...perfis) {
   };
 }
 
-module.exports = { autenticar, exigirPerfil, getJwtSecret };
+module.exports = { autenticar, exigirPerfil, getJwtSecret, SESSION_COOKIE };
