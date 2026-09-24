@@ -25,7 +25,9 @@ export default function Login({ onLogin }) {
       onLogin(data);
       toast.success('Login realizado com sucesso.');
     } catch (err) {
-      const mensagem = err.response?.data?.error || 'Não foi possível entrar no sistema.';
+      const mensagem = err.response?.status === 429
+        ? 'Muitas tentativas de login. Tente novamente mais tarde.'
+        : err.response?.data?.error || 'Não foi possível entrar no sistema.';
       setErro(mensagem);
       toast.error(mensagem);
     } finally {
