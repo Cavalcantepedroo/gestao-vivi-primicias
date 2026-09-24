@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { viviPool } = require('../database/db');
 const { getJwtSecret, SESSION_COOKIE } = require('../middleware/auth');
+const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
 async function login(req, res) {
   const username = String(req.body.username || '').trim().toLowerCase();
@@ -24,8 +25,8 @@ async function login(req, res) {
     const token = jwt.sign(payload, getJwtSecret(), { expiresIn: '2h', algorithm: 'HS256' });
     res.cookie(SESSION_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 2 * 60 * 60 * 1000,
       path: '/',
     });
@@ -41,7 +42,12 @@ function verificarSessao(req, res) {
 }
 
 function logout(req, res) {
-  res.clearCookie(SESSION_COOKIE, { httpOnly: true, path: '/' });
+  res.clearCookie(SESSION_COOKIE, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+  });
   res.status(204).send();
 }
 
