@@ -7,21 +7,22 @@
 
 :root {
   /* ---- Tokens neutros (base) ---- */
-  --color-bg:         #F8F7F5;   /* off-white quente */
+  --color-bg:         #fffaf1;   /* base quente da Vivi */
   --color-surface:    #FFFFFF;
-  --color-surface-2:  #F2F1EF;
-  --color-border:     #E8E6E1;
+  --color-surface-2:  #f8f0df;
+  --color-border:     #eadfca;
   --color-text:       #1A1917;
   --color-text-muted: #7A786F;
 
   /* ---- Sidebar ---- */
-  --sidebar-bg:       #FAFAF8;
-  --sidebar-border:   #E8E6E1;
+  --sidebar-bg:       #fffdf7;
+  --sidebar-border:   #eadfca;
 
   /* ---- Accent padrão (Vivi — dourado claro) ---- */
   --color-accent:        #dcbe8b;
   --color-accent-light:  #f8f1e6;
   --color-accent-hover:  #c2a26b;
+  --color-accent-strong: #a17b3e;
   --color-accent-ring:   #dcbe8b40;
   --color-brand-dot:     #dcbe8b;
   --company-label-color: #8a704a;
@@ -36,12 +37,17 @@
 
 /* ---- Tema Primicias — verde sálvia ---- */
 [data-empresa="primicias"] {
-  --color-accent:        #91a38a;
-  --color-accent-light:  #eaf0e8;
-  --color-accent-hover:  #7a8c73;
-  --color-accent-ring:   #91a38a40;
-  --color-brand-dot:     #91a38a;
-  --company-label-color: #5c6b56;
+  --color-bg:            #f2f7f1;
+  --color-surface-2:     #e7f0e5;
+  --color-border:        #d5e2d1;
+  --sidebar-bg:          #f7fbf6;
+  --color-accent:        #5f9b68;
+  --color-accent-light:  #dff0df;
+  --color-accent-hover:  #407b4b;
+  --color-accent-strong: #347340;
+  --color-accent-ring:   #5f9b6840;
+  --color-brand-dot:     #5f9b68;
+  --company-label-color: #31633a;
 }
 
 /* ============================================================
@@ -298,6 +304,22 @@ body {
   flex-direction: column;
   overflow: hidden;
   background-color: var(--color-bg);
+}
+
+/* Tinge os utilitários compartilhados sem alterar cores semânticas de erro/sucesso. */
+[data-empresa] .bg-indigo-600 { background-color: var(--color-accent-strong) !important; }
+[data-empresa] .hover\:bg-indigo-700:hover { background-color: var(--color-accent-hover) !important; }
+[data-empresa] .text-indigo-600 { color: var(--color-accent-strong) !important; }
+[data-empresa] .border-indigo-500 { border-color: var(--color-accent) !important; }
+[data-empresa] .focus\:border-indigo-500:focus { border-color: var(--color-accent) !important; }
+[data-empresa] .focus\:ring-indigo-100:focus { --tw-ring-color: var(--color-accent-ring) !important; }
+[data-empresa] .bg-gray-50 { background-color: color-mix(in srgb, var(--color-accent-light) 28%, white) !important; }
+[data-empresa] .bg-gray-100 { background-color: color-mix(in srgb, var(--color-accent-light) 58%, white) !important; }
+[data-empresa] .border-gray-200,
+[data-empresa] .border-gray-300 { border-color: var(--color-border) !important; }
+
+button, input, select, textarea {
+  accent-color: var(--color-accent-strong);
 }
 
 /* ---- Top bar ---- */

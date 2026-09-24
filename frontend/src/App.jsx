@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import './index.css';
 import { EmpresaProvider } from './context/EmpresaContext';
 import { Toaster } from 'react-hot-toast';
@@ -49,11 +49,6 @@ function AppLayout({ session, onLogout }) {
     setPagina(proximaPagina);
     setMenuMobileAberto(false);
   };
-
-  // Garante que o CSS global inicie com a empresa correta (Vivi padrão)
-  useEffect(() => {
-    document.documentElement.setAttribute('data-empresa', 'vivi');
-  }, []);
 
   return (
     <>
