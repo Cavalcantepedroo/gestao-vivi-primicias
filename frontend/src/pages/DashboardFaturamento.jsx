@@ -13,7 +13,7 @@ const dashboardApi = axios.create({
 dashboardApi.interceptors.request.use(attachToken);
 
 const FILTROS = [
-  { id: 'vivi', label: 'Vivi Semi-Joias' },
+  { id: 'vivi', label: 'Vivi Semijoias' },
   { id: 'primicias', label: 'Primicias' },
   { id: 'all', label: 'Consolidado (Ambas)' },
 ];
@@ -35,7 +35,7 @@ function TooltipFaturamento({ active, payload, label, consolidado, formataMoeda 
       <p className="mb-2 text-sm font-semibold text-gray-900">{label}</p>
       {consolidado ? (
         <div className="space-y-1 text-sm">
-          <p className="text-[#a17b3e]">Vivi Semi-Joias: <strong>{formataMoeda(dados.vivi)}</strong></p>
+          <p className="text-[#a17b3e]">Vivi Semijoias: <strong>{formataMoeda(dados.vivi)}</strong></p>
           <p className="text-[#55734e]">Primicias: <strong>{formataMoeda(dados.primicias)}</strong></p>
           <p className="border-t border-gray-100 pt-1 font-semibold text-gray-900">Total: {formataMoeda(dados.total)}</p>
         </div>
@@ -197,7 +197,7 @@ export default function DashboardFaturamento() {
                   
                   {filtroAtual === 'all' ? (
                     <>
-                      <Bar dataKey="vivi" name="Vivi Semi-Joias" stackId="a" fill="#dcbe8b" radius={[0, 0, 4, 4]} />
+                      <Bar dataKey="vivi" name="Vivi Semijoias" stackId="a" fill="#dcbe8b" radius={[0, 0, 4, 4]} />
                       <Bar dataKey="primicias" name="Primicias" stackId="a" fill="#91a38a" radius={[4, 4, 0, 0]} />
                     </>
                   ) : (

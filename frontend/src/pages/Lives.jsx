@@ -264,7 +264,7 @@ export default function Lives() {
       };
       await getApi(empresa).post('/vendas', payload);
 
-      const nomeEmpresa = empresa === 'vivi' ? 'Vivi Semi-Joias' : 'Primícias Acessórios';
+      const nomeEmpresa = empresa === 'vivi' ? 'Vivi Semijoias' : 'Primícias Acessórios';
       const chavePix = empresa === 'vivi' ? 'cnpj-vivi@email.com' : 'cnpj-primicias@email.com';
       const totalFormatado = calcularTotal(clienteAtivo.itens).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
