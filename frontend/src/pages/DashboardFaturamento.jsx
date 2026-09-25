@@ -6,18 +6,11 @@ import {
 } from 'recharts';
 
 // Instância base do axios pro dashboard (sem injetar /empresa obrigatoriamente na URL)
-const dashboardApi = axios.create({ baseURL: `${API_BASE_URL}/api/dashboard` });
+const dashboardApi = axios.create({
+  baseURL: `${API_BASE_URL}/api/dashboard`,
+  withCredentials: true,
+});
 dashboardApi.interceptors.request.use(attachToken);
-dashboardApi.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth-session');
-      window.location.reload();
-    }
-    return Promise.reject(error);
-  }
-);
 
 const FILTROS = [
   { id: 'vivi', label: 'Vivi Semi-Joias' },
@@ -58,14 +51,26 @@ export default function DashboardFaturamento() {
   const [periodoAtual, setPeriodoAtual] = useState('7d');
   const [dados, setDados] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     setLoading(true);
+    setErro('');
     dashboardApi.get(`/faturamento?empresa=${filtroAtual}&periodo=${periodoAtual}`)
       .then(res => setDados(res.data))
-      .catch(console.error)
+      .catch((error) => {
+        console.error(error);
+        if (error.response?.status === 401) {
+          setErro('Sua sessão expirou. Faça login novamente para continuar.');
+        } else if (error.response?.status === 403) {
+          setErro('Seu usuário não tem permissão para acessar o dashboard.');
+        } else {
+          setErro('Não foi possível carregar os dados do dashboard. Tente novamente.');
+        }
+      })
       .finally(() => setLoading(false));
-  }, [filtroAtual, periodoAtual]);
+  }, [filtroAtual, periodoAtual, tentativa]);
 
   const formataMoeda = (valor) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
@@ -114,6 +119,17 @@ export default function DashboardFaturamento() {
 
       {loading ? (
         <div className="text-gray-400 py-10 animate-pulse">Carregando métricas...</div>
+      ) : erro ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span>{erro}</span>
+          <button
+            type="button"
+            onClick={() => setTentativa((atual) => atual + 1)}
+            className="font-semibold underline underline-offset-2"
+          >
+            Tentar novamente
+          </button>
+        </div>
       ) : (
         <>
           {/* Cards Principais */}
