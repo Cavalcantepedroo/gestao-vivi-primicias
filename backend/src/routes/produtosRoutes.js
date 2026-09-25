@@ -8,6 +8,7 @@ const {
   atualizarProduto,
   deletarProduto,
   listarMovimentacoes,
+  deletarMovimentacao,
 } = require('../controllers/produtosController');
 
 const router = Router({ mergeParams: true });
@@ -17,6 +18,7 @@ router.use(resolveDb);
 
 router.get('/',        listarProdutos);
 router.get('/movimentacoes', listarMovimentacoes);
+router.delete('/movimentacoes/:id', deletarMovimentacao);
 router.get('/codigo/:codigo_de_barras', buscarProdutoPorCodigo); // Deve vir antes de /:id
 router.get('/:id',     buscarProduto);
 router.post('/',       criarProduto);

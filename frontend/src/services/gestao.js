@@ -12,6 +12,10 @@ export function getMovimentacoesEstoque(empresa) {
   return getApi(empresa).get('/produtos/movimentacoes');
 }
 
+export function deleteMovimentacaoEstoque(empresa, id) {
+  return getApi(empresa).delete(`/produtos/movimentacoes/${id}`);
+}
+
 export function getProduto(empresa, id) {
   return getApi(empresa).get(`/produtos/${id}`);
 }

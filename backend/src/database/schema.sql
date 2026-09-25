@@ -71,6 +71,50 @@ CREATE TABLE IF NOT EXISTS vendas (
     FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE RESTRICT
 );
 
+ALTER TABLE movimentacoes_estoque
+  ADD COLUMN IF NOT EXISTS venda_id UUID;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fk_movimentacoes_estoque_venda'
+  ) THEN
+    ALTER TABLE movimentacoes_estoque
+      ADD CONSTRAINT fk_movimentacoes_estoque_venda
+      FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+WITH movimentos_ranqueados AS (
+  SELECT id, produto_id, quantidade, created_at,
+         ROW_NUMBER() OVER (
+           PARTITION BY produto_id, quantidade, created_at ORDER BY id
+         ) AS posicao
+  FROM movimentacoes_estoque
+  WHERE venda_id IS NULL
+    AND tipo = 'saida'
+    AND motivo IN ('Venda PDV', 'Venda Live')
+), vendas_ranqueadas AS (
+  SELECT id, produto_id, quantidade, data_venda,
+         ROW_NUMBER() OVER (
+           PARTITION BY produto_id, quantidade, data_venda ORDER BY id
+         ) AS posicao
+  FROM vendas
+)
+UPDATE movimentacoes_estoque AS movimento
+SET venda_id = venda.id
+FROM movimentos_ranqueados AS movimento_ranqueado
+JOIN vendas_ranqueadas AS venda
+  ON venda.produto_id = movimento_ranqueado.produto_id
+ AND venda.quantidade = movimento_ranqueado.quantidade
+ AND venda.data_venda = movimento_ranqueado.created_at
+ AND venda.posicao = movimento_ranqueado.posicao
+WHERE movimento.id = movimento_ranqueado.id;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_movimentacoes_estoque_venda_id
+  ON movimentacoes_estoque (venda_id)
+  WHERE venda_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS vendas_pdv (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   produto_id UUID NOT NULL,

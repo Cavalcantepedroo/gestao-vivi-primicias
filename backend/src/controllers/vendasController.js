@@ -256,9 +256,9 @@ async function criarVenda(req, res) {
       );
 
       await client.query(
-        `INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, motivo, observacao)
-         VALUES ($1, 'saida', $2, $3, $4)`,
-        [produto_id, quantidade, motivoVenda, `Saída registrada automaticamente por ${motivoVenda}`]
+        `INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, motivo, observacao, venda_id)
+         VALUES ($1, 'saida', $2, $3, $4, $5)`,
+        [produto_id, quantidade, motivoVenda, `Saída registrada automaticamente por ${motivoVenda}`, vendas[0].id]
       );
 
       vendasRegistradas.push(vendas[0]);
@@ -318,8 +318,8 @@ async function fecharVendaLive(req, res) {
       const valorItem = Number(produto.preco) * quantidade;
       valorTotalPedido += valorItem;
 
-      await client.query(
-        `INSERT INTO vendas (produto_id, quantidade, valor_total) VALUES ($1, $2, $3)`,
+      const { rows: vendas } = await client.query(
+        `INSERT INTO vendas (produto_id, quantidade, valor_total) VALUES ($1, $2, $3) RETURNING id`,
         [produto_id, quantidade, valorItem.toFixed(2)]
       );
 
@@ -329,9 +329,9 @@ async function fecharVendaLive(req, res) {
       );
 
       await client.query(
-        `INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, motivo, observacao)
-         VALUES ($1, 'saida', $2, 'Venda Live', 'Saída registrada automaticamente por Venda Live')`,
-        [produto_id, quantidade]
+        `INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, motivo, observacao, venda_id)
+         VALUES ($1, 'saida', $2, 'Venda Live', 'Saída registrada automaticamente por Venda Live', $3)`,
+        [produto_id, quantidade, vendas[0].id]
       );
 
       resumoItens.push(`- ${quantidade}x ${produto.nome} (R$ ${Number(produto.preco).toFixed(2)})`);
