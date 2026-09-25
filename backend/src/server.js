@@ -14,6 +14,7 @@ const { autenticar, exigirPerfil } = require('./middleware/auth');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 let initializationPromise;
+app.set('etag', false);
 const frontendOrigins = [
   ...(process.env.FRONTEND_ORIGINS || '').split(','),
   'http://localhost:3000',
@@ -25,6 +26,11 @@ const frontendOrigins = [
 // ---------------------------------------------------------------------------
 // Middlewares globais
 // ---------------------------------------------------------------------------
+app.use('/api', (_req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 app.use(cors({
   origin(origin, callback) {
     const origemNormalizada = origin?.replace(/\/$/, '');
