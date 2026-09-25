@@ -180,6 +180,7 @@ async function listarMovimentacoes(req, res) {
         m.quantidade,
         m.motivo,
         m.observacao,
+        m.venda_id,
         m.created_at
       FROM movimentacoes_estoque m
       JOIN produtos p ON p.id = m.produto_id
@@ -197,6 +198,70 @@ async function listarMovimentacoes(req, res) {
   }
 }
 
+async function deletarMovimentacao(req, res) {
+  const client = await req.db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
+      `SELECT id, produto_id, tipo, quantidade, venda_id
+       FROM movimentacoes_estoque
+       WHERE id = $1
+       FOR UPDATE`,
+      [req.params.id]
+    );
+
+    if (!rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Movimentação não encontrada.' });
+    }
+
+    const movimentacao = rows[0];
+    if (!['entrada', 'saida'].includes(movimentacao.tipo)) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Não é possível reverter este tipo de movimentação.' });
+    }
+
+    const estoqueAtualizado = movimentacao.tipo === 'entrada'
+      ? await client.query(
+        `UPDATE produtos
+         SET quantidade_estoque = quantidade_estoque - $1, atualizado_em = NOW()
+         WHERE id = $2 AND quantidade_estoque >= $1
+         RETURNING id`,
+        [movimentacao.quantidade, movimentacao.produto_id]
+      )
+      : await client.query(
+        `UPDATE produtos
+         SET quantidade_estoque = quantidade_estoque + $1, atualizado_em = NOW()
+         WHERE id = $2
+         RETURNING id`,
+        [movimentacao.quantidade, movimentacao.produto_id]
+      );
+
+    if (!estoqueAtualizado.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        error: 'Não é possível apagar esta entrada porque o estoque atual ficaria negativo.',
+      });
+    }
+
+    if (movimentacao.venda_id) {
+      await client.query('DELETE FROM vendas WHERE id = $1', [movimentacao.venda_id]);
+    }
+
+    await client.query('DELETE FROM movimentacoes_estoque WHERE id = $1', [movimentacao.id]);
+    await client.query('COMMIT');
+    return res.status(204).send();
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao excluir movimentação:', err);
+    return res.status(500).json({ error: 'Não foi possível excluir a movimentação.' });
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   listarProdutos,
   buscarProduto,
@@ -205,4 +270,5 @@ module.exports = {
   atualizarProduto,
   deletarProduto,
   listarMovimentacoes,
+  deletarMovimentacao,
 };

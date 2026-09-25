@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEmpresa } from '../context/EmpresaContext';
-import { getMovimentacoesEstoque } from '../services/gestao';
+import { deleteMovimentacaoEstoque, getMovimentacoesEstoque } from '../services/gestao';
 
 const badgeClasses = {
   entrada: 'bg-green-100 text-green-700',
@@ -16,6 +16,7 @@ export default function MovimentacoesEstoque() {
   const [filtro, setFiltro] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('todos');
   const [periodoFiltro, setPeriodoFiltro] = useState('todos');
+  const [excluindoId, setExcluindoId] = useState(null);
 
   const carregarMovimentacoes = useCallback(async () => {
     try {
@@ -29,6 +30,31 @@ export default function MovimentacoesEstoque() {
       setLoading(false);
     }
   }, [empresa]);
+
+  const excluirMovimentacao = async (movimentacao) => {
+    if (movimentacao.tipo === 'ajuste') return;
+
+    const impactoEstoque = movimentacao.tipo === 'entrada'
+      ? 'A quantidade será retirada do estoque.'
+      : 'A quantidade será devolvida ao estoque.';
+    const impactoVenda = movimentacao.venda_id
+      ? ' A venda também será removida do faturamento e do dashboard.'
+      : '';
+    const confirmacao = `Excluir esta movimentação? ${impactoEstoque}${impactoVenda} Esta ação não pode ser desfeita.`;
+
+    if (!window.confirm(confirmacao)) return;
+
+    setErro('');
+    setExcluindoId(movimentacao.id);
+    try {
+      await deleteMovimentacaoEstoque(empresa, movimentacao.id);
+      setMovimentacoes((atuais) => atuais.filter((item) => item.id !== movimentacao.id));
+    } catch (err) {
+      setErro(err.response?.data?.error || err.message);
+    } finally {
+      setExcluindoId(null);
+    }
+  };
 
   useEffect(() => {
     carregarMovimentacoes();
@@ -155,18 +181,19 @@ export default function MovimentacoesEstoque() {
                 <th className="px-4 py-3">Motivo</th>
                 <th className="px-4 py-3">Observação</th>
                 <th className="px-4 py-3">Data</th>
+                <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
                     Carregando movimentações...
                   </td>
                 </tr>
               ) : movimentacoesFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
                     Nenhuma movimentação encontrada para o filtro informado.
                   </td>
                 </tr>
@@ -186,6 +213,20 @@ export default function MovimentacoesEstoque() {
                     <td className="px-4 py-3 text-gray-600">{mov.observacao || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {new Date(mov.created_at).toLocaleString('pt-BR')}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => excluirMovimentacao(mov)}
+                        disabled={mov.tipo === 'ajuste' || excluindoId === mov.id}
+                        aria-label={`Excluir movimentação de ${mov.produto_nome}`}
+                        title={mov.tipo === 'ajuste' ? 'Ajustes não podem ser revertidos sem o saldo anterior.' : 'Excluir movimentação'}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                          <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 ))
